@@ -52,9 +52,9 @@ export const SHAPES = {
     },
     mod: (a, t) =>
       1 +
-      0.014 * Math.sin(41 * a + 3 * t) * Math.sin(57 * t) +
-      0.011 * Math.sin(29 * a - 71 * t + 1.7) +
-      0.008 * Math.sin(67 * a + 43 * t),
+      0.016 * Math.sin(19 * a + 3 * t) * Math.sin(31 * t) +
+      0.012 * Math.sin(13 * a - 37 * t + 1.7) +
+      0.008 * Math.sin(27 * a + 23 * t),
   },
   cactus: {
     nom: 'Pot Cactus',
@@ -79,7 +79,7 @@ export const SHAPES = {
     layers: 104,
     glow: true,
     profile: (t) => 0.7 + 0.08 * Math.sin(Math.PI * t) - 0.1 * smooth(0.85, 1, t),
-    mod: (a, t) => 1 + 0.05 * Math.sin(30 * t + 2.2 * Math.sin(3 * a)) + 0.012 * Math.sin(24 * a),
+    mod: (a, t) => 1 + 0.05 * Math.sin(22 * t + 2.2 * Math.sin(3 * a)) + 0.01 * Math.sin(16 * a),
   },
   flamme: {
     nom: 'Lampe Flamme',
@@ -98,7 +98,7 @@ export function hexToRgb(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-const LEVELS = 14;
+const LEVELS = 24;
 
 /** Brightness ramp for one colour, precomputed so a frame does no string work. */
 function ramp(hex, glow) {
@@ -106,7 +106,7 @@ function ramp(hex, glow) {
   const out = [];
   for (let i = 0; i < LEVELS; i++) {
     const k = i / (LEVELS - 1);
-    const lit = glow ? 0.55 + 0.75 * k : 0.22 + 1.0 * k;
+    const lit = glow ? 0.42 + 0.7 * k : 0.22 + 1.0 * k;
     // Highlights drift toward white so the top of the ramp looks like sheen.
     const spec = Math.max(0, k - 0.82) * 2.2;
     const ch = (c) => Math.round(Math.min(255, c * lit + (255 - c * lit) * spec));
@@ -129,7 +129,7 @@ const L = (() => {
   return v.map((x) => x / m);
 })();
 
-const SEG = 56;
+const SEG = 120;
 
 /**
  * Draw one frame.
@@ -200,7 +200,12 @@ export function drawPrint(ctx, w, h, opts) {
   ctx.lineWidth = Math.max(1, layerPx * 1.18);
 
   const eps = 0.002;
-  const radius = (a, t) => shape.profile(t) * shape.mod(a + rotation, t);
+  // Clamp: the normal estimate samples just past 0 and 1, where fractional
+  // powers in the profiles would return NaN.
+  const radius = (a, t) => {
+    const tc = t < 0 ? 0 : t > 1 ? 1 : t;
+    return shape.profile(tc) * shape.mod(a + rotation, tc);
+  };
 
   const buckets = Array.from({ length: LEVELS }, () => []);
 
@@ -228,7 +233,8 @@ export function drawPrint(ctx, w, h, opts) {
     b *= 0.75 + 0.25 * Math.abs(n[2] / m);
     // Every other layer a touch darker: the visible print lines.
     if (i % 2) b *= 0.93;
-    return Math.max(0, Math.min(LEVELS - 1, Math.round(b * (LEVELS - 1))));
+    const lvl = Math.round(b * (LEVELS - 1));
+    return Number.isFinite(lvl) ? Math.max(0, Math.min(LEVELS - 1, lvl)) : 0;
   };
 
   const drawLayer = (i, aEnd = Math.PI, aStart = 0) => {
