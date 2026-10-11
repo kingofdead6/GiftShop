@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useScroll, useSpring, useTransform } from 'framer-motion';
-import { avis, collections, products, productsIn, wilayas } from '../data/catalogue';
+import { avis, wilayas } from '../data/catalogue';
+import { isDarkCollection, useCatalogue } from '../lib/catalogue';
 import { brand, showPrices } from '../config';
 import { drawPrint, fitCanvas } from '../lib/layerRender';
 import { EASE, printEase, useReducedMotion } from '../lib/motion';
 import ProductCard from '../components/ProductCard';
 import ProductArt from '../components/ProductArt';
-import Figure from '../components/Figures';
 import { PrintText, RiseLines, VelocityMarquee } from '../components/Chrome';
 
 function Eyebrow({ n, children, light = false }) {
@@ -76,9 +76,23 @@ export function Manifesto() {
 
 // ── Drop: the incense collection ────────────────────────────────────────────
 
+const NUMBERS = ['Zéro', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix'];
+
+/**
+ * The drop band features whichever collection the admin flagged "Nouveau".
+ * The incense collection keeps its hand-written copy; any other collection
+ * gets copy built from its name and tagline.
+ */
 export function Drop() {
-  const items = productsIn('encens');
+  const { collections, productsIn } = useCatalogue();
+  const coll = collections.find((c) => c.nouveau) || collections.find((c) => c.slug === 'encens');
+  const items = coll ? productsIn(coll.slug).slice(0, 4) : [];
   const reduced = useReducedMotion();
+  if (!coll || !items.length) return null;
+  const incense = coll.slug === 'encens';
+  const title = incense
+    ? [`${NUMBERS[items.length] || items.length} gardiens`.replace('Une gardiens', 'Un gardien'), 'pour votre encens.']
+    : [coll.nom, 'vient de sortir.'];
 
   return (
     <section id="drop" className="relative overflow-hidden bg-ink py-24 text-bone lg:py-36">
@@ -90,16 +104,17 @@ export function Drop() {
               Nouvelle collection
             </Eyebrow>
             <h2 className="display mt-6 text-[clamp(52px,9vw,150px)]">
-              <RiseLines lines={['Quatre gardiens', <span key="s" className="serif-i font-normal text-ember">pour votre encens.</span>]} />
+              <RiseLines lines={[title[0], <span key="s" className="serif-i font-normal text-ember">{title[1]}</span>]} />
             </h2>
           </div>
           <p className="max-w-sm text-bone/70">
-            Samurai, Meow, Alien et Moai. Le bâton se plante derrière, la fumée monte, votre salon sent bon. Imprimés à la
-            commande, en trois couleurs chacun.
+            {incense
+              ? `${items.map((p) => p.nom).join(', ').replace(/, ([^,]*)$/, ' et $1')}. Le bâton se plante derrière, la fumée monte, votre salon sent bon. Imprimés à la commande.`
+              : coll.accroche}
           </p>
         </div>
 
-        <div className="mt-16 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        <div className={`mt-16 grid grid-cols-2 gap-3 sm:gap-5 ${items.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
           {items.map((p, i) => (
             <motion.div
               key={p.slug}
@@ -115,10 +130,10 @@ export function Drop() {
                 style={{ background: p.bg }}
               >
                 <div className="layer-lines absolute inset-0" />
-                <div className="absolute inset-0 p-[6%] transition-transform duration-700 ease-out-expo group-hover:-translate-y-3 group-hover:scale-[1.06]">
-                  <Figure figure={p.art.figure} color={p.couleurs[0].hex} className="h-full w-full" />
+                <div className="absolute inset-0 transition-transform duration-700 ease-out-expo group-hover:-translate-y-3 group-hover:scale-[1.06]">
+                  <ProductArt product={p} />
                 </div>
-                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4 text-ink">
+                <div className={`absolute inset-x-0 bottom-0 flex items-end justify-between p-4 ${p.dark ? 'text-bone' : 'text-ink'}`}>
                   <span className="display text-[clamp(28px,3.4vw,48px)]">{p.nom}</span>
                   <span className="mono mb-1.5 opacity-60">0{i + 1}</span>
                 </div>
@@ -133,10 +148,11 @@ export function Drop() {
 
 // ── Collections: horizontal scroll, pinned ──────────────────────────────────
 
-function CollectionPanel({ c, i }) {
+function CollectionPanel({ c, i, total }) {
+  const { productsIn } = useCatalogue();
   const items = productsIn(c.slug);
-  const hero = items.find((p) => p.art.shape === c.hero || p.art.figure === c.hero) || items[0];
-  const dark = c.tone === '#1C1A17';
+  const hero = items.find((p) => p.slug === c.hero) || items.find((p) => p.art.shape === c.hero || p.art.figure === c.hero) || items[0];
+  const dark = isDarkCollection(c);
   return (
     <Link
       to={`/collection/${c.slug}`}
@@ -145,12 +161,14 @@ function CollectionPanel({ c, i }) {
       style={{ background: c.tone }}
     >
       <div className={`absolute inset-0 ${dark ? 'layer-lines-light' : 'layer-lines'}`} />
-      <div className="absolute right-[-6%] top-[12%] h-[50%] w-[80%] transition-transform sm:inset-y-0 sm:h-auto sm:w-[70%] duration-1000 ease-out-expo group-hover:scale-105 group-hover:-rotate-2">
-        <ProductArt product={hero} active />
-      </div>
+      {hero ? (
+        <div className="absolute right-[-6%] top-[12%] h-[50%] w-[80%] transition-transform sm:inset-y-0 sm:h-auto sm:w-[70%] duration-1000 ease-out-expo group-hover:scale-105 group-hover:-rotate-2">
+          <ProductArt product={hero} active />
+        </div>
+      ) : null}
       <div className="relative flex items-center justify-between">
         <span className="mono opacity-70">
-          0{i + 1} / 0{collections.length}
+          {String(i + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
         </span>
         <span className="mono rounded-full border border-current/25 px-3 py-1 opacity-80">
           {items.length} pièces
@@ -170,6 +188,7 @@ function CollectionPanel({ c, i }) {
 }
 
 export function Collections() {
+  const { collections } = useCatalogue();
   const ref = useRef(null);
   const track = useRef(null);
   const reduced = useReducedMotion();
@@ -192,14 +211,14 @@ export function Collections() {
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, [reduced]);
+  }, [reduced, collections.length]);
 
   const header = (
     <div className="mx-auto flex w-full max-w-[1500px] items-end justify-between px-5 sm:px-8">
       <div>
         <Eyebrow n="03">Collections</Eyebrow>
         <h2 className="display mt-5 text-[clamp(48px,7vw,112px)]">
-          Cinq familles, <span className="serif-i font-normal">un atelier.</span>
+          {NUMBERS[collections.length] || collections.length} famille{collections.length > 1 ? 's' : ''}, <span className="serif-i font-normal">un atelier.</span>
         </h2>
       </div>
       {pinned ? (
@@ -210,7 +229,7 @@ export function Collections() {
     </div>
   );
 
-  const panels = collections.map((c, i) => <CollectionPanel key={c.slug} c={c} i={i} />);
+  const panels = collections.map((c, i) => <CollectionPanel key={c.slug} c={c} i={i} total={collections.length} />);
 
   if (!pinned) {
     return (
@@ -239,6 +258,7 @@ export function Collections() {
 // ── All pieces, filterable ──────────────────────────────────────────────────
 
 export function Pieces() {
+  const { collections, products } = useCatalogue();
   const [filter, setFilter] = useState('tout');
   const list = filter === 'tout' ? products : products.filter((p) => p.collection === filter);
   const chips = [{ slug: 'tout', nom: 'Tout' }, ...collections];

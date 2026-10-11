@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { productBySlug, wilayas } from '../data/catalogue';
+import { wilayas } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { formatDA, instagramDmUrl, showPrices } from '../config';
 import { EASE } from '../lib/motion';
 import ProductCard from '../components/ProductCard';
@@ -45,6 +46,7 @@ function Tracker({ statut }) {
 function Demandes() {
   const [list, setList] = useState(null);
   const [error, setError] = useState('');
+  const { productBySlug } = useCatalogue();
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -119,6 +121,7 @@ function Demandes() {
 
 function Favoris() {
   const { user } = useAuth();
+  const { productBySlug } = useCatalogue();
   const items = (user.wishlist || []).map(productBySlug).filter(Boolean);
   if (!items.length) {
     return (

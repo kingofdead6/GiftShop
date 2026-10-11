@@ -1,17 +1,19 @@
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { collectionBySlug, collections, productsIn } from '../data/catalogue';
+import { isDarkCollection, useCatalogue } from '../lib/catalogue';
 import ProductCard from '../components/ProductCard';
 import { RiseLines } from '../components/Chrome';
 import { EASE } from '../lib/motion';
 import NotFound from './NotFound';
+import { PageLoading } from '../components/AccountUI';
 
 export default function Collection() {
   const { slug } = useParams();
+  const { collectionBySlug, collections, productsIn, ready } = useCatalogue();
   const c = collectionBySlug(slug);
-  if (!c) return <NotFound />;
+  if (!c) return ready ? <NotFound /> : <PageLoading />;
   const items = productsIn(slug);
-  const dark = c.tone === '#1C1A17';
+  const dark = isDarkCollection(c);
   const i = collections.indexOf(c);
   const next = collections[(i + 1) % collections.length];
 

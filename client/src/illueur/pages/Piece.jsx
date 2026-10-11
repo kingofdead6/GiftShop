@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { collectionBySlug, productBySlug, products } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { instagramDmUrl, showPrices } from '../config';
 import { useSelection } from '../lib/selection';
 import { EASE, printEase } from '../lib/motion';
@@ -9,11 +9,13 @@ import ProductArt from '../components/ProductArt';
 import ProductCard, { Price } from '../components/ProductCard';
 import { Magnetic, RiseLines } from '../components/Chrome';
 import NotFound from './NotFound';
-import { WishlistButton } from '../components/AccountUI';
+import { PageLoading, WishlistButton } from '../components/AccountUI';
 
 export default function Piece() {
   const { slug } = useParams();
+  const { productBySlug, ready } = useCatalogue();
   const p = productBySlug(slug);
+  if (!p && !ready) return <PageLoading />;
   // Keyed on slug so moving between pieces resets the colour and quantity.
   return p ? <PieceView key={slug} p={p} /> : <NotFound />;
 }
@@ -23,7 +25,8 @@ function PieceView({ p }) {
   const [qte, setQte] = useState(1);
   const [added, setAdded] = useState(false);
   const { add, setOpen } = useSelection();
-  const coll = collectionBySlug(p.collection);
+  const { collectionBySlug, products } = useCatalogue();
+  const coll = collectionBySlug(p.collection) || { slug: p.collection, nom: 'Collection' };
   const related = products.filter((x) => x.collection === p.collection && x.slug !== p.slug).slice(0, 3);
   const fill = related.length < 3 ? products.filter((x) => x.featured && x.collection !== p.collection).slice(0, 3 - related.length) : [];
   const dark = p.dark;
@@ -165,7 +168,7 @@ function PieceView({ p }) {
             </div>
 
             <dl className="mt-12 grid grid-cols-2 border-t border-ink/10">
-              {Object.entries(p.specs).map(([k, v], i) => (
+              {[...Object.entries(p.specs || {}), ['matière', 'PLA végétal'], ['livraison', '58 wilayas']].map(([k, v], i) => (
                 <motion.div
                   key={k}
                   initial={{ opacity: 0 }}
@@ -177,14 +180,6 @@ function PieceView({ p }) {
                   <dd className="mt-1 text-[17px] font-medium">{v}</dd>
                 </motion.div>
               ))}
-              <div className="border-b border-ink/10 py-4 pe-4">
-                <dt className="mono text-ash">matière</dt>
-                <dd className="mt-1 text-[17px] font-medium">PLA végétal</dd>
-              </div>
-              <div className="border-b border-s border-ink/10 py-4 ps-4">
-                <dt className="mono text-ash">livraison</dt>
-                <dd className="mt-1 text-[17px] font-medium">58 wilayas</dd>
-              </div>
             </dl>
           </motion.div>
         </div>

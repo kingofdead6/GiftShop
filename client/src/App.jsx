@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 
 import { SelectionProvider } from './illueur/lib/selection';
 import { AuthProvider } from './illueur/lib/auth';
+import { loadCatalogue } from './illueur/lib/catalogue';
 import { RequireAuth } from './illueur/components/AccountUI';
 import { EASE_IN_OUT, scrollToTarget, useReducedMotion, useSmoothScroll } from './illueur/lib/motion';
 import Navbar from './illueur/components/Navbar';
@@ -23,8 +25,9 @@ import Admin from './illueur/pages/Admin';
 /**
  * Atelier illueur — storefront demo.
  *
- * Fully client-side: the catalogue lives in illueur/data/catalogue.js and
- * orders end in an Instagram DM, which is how the shop already works.
+ * The catalogue comes from the API (edited in the admin), with
+ * illueur/data/catalogue.js bundled as the fallback. Orders end in an
+ * Instagram DM, which is how the shop already works.
  * Accounts, demandes and the admin talk to the server in /server (database
  * "illueur", see server/db.js) through illueur/lib/api.js.
  */
@@ -68,6 +71,9 @@ function Page({ children }) {
 function Shell() {
   const location = useLocation();
   useSmoothScroll();
+  useEffect(() => {
+    loadCatalogue();
+  }, []);
 
   return (
     <>

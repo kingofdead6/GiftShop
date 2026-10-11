@@ -39,14 +39,14 @@ async function saveLocalImage(file) {
  * `client/public/products/`, so an unconfigured deployment fails loudly here
  * rather than silently storing empty image URLs.
  */
-export async function uploadToCloudinary(file) {
+export async function uploadToCloudinary(file, { folder = 'evora-home' } = {}) {
   if (!file) return null;
 
   if (configured) {
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: 'evora-home',
+          folder,
           resource_type: 'image',
           allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
           transformation: [{ width: 1600, height: 1600, crop: 'limit' }, { quality: 'auto:good' }],
@@ -56,7 +56,7 @@ export async function uploadToCloudinary(file) {
       stream.end(file.buffer);
     });
 
-    return { url: result.secure_url, alt: '', ordre: 0 };
+    return { url: result.secure_url, publicId: result.public_id, alt: '', ordre: 0 };
   }
 
   return await saveLocalImage(file);

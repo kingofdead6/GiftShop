@@ -4,16 +4,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { productBySlug } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { formatDA } from '../config';
 import { EASE } from '../lib/motion';
 import ProductArt from '../components/ProductArt';
 import { PrintDots, STATUTS, StatusPill, Tabs, formatDate } from '../components/AccountUI';
+import { CollectionsView, PiecesView } from './AdminCatalogue';
 
 /**
- * The shop's back office. Three views: what needs attention, every demande
- * with its status, and the customer list. Products stay in the client
- * catalogue (illueur/data/catalogue.js) for this version.
+ * The shop's back office: what needs attention, every demande with its
+ * status, the catalogue (pieces and collections, see AdminCatalogue.jsx) and
+ * the customer list.
  */
 
 function useLoad(fn, deps) {
@@ -148,6 +149,7 @@ function DemandeRow({ d, onChange }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(d.noteInterne || '');
   const [saving, setSaving] = useState(false);
+  const { productBySlug } = useCatalogue();
   const u = d.userId;
 
   const update = async (body, msg) => {
@@ -490,7 +492,7 @@ function ClientsView() {
 export default function Admin() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
-  const tab = ['apercu', 'demandes', 'clients'].includes(params.get('vue')) ? params.get('vue') : 'apercu';
+  const tab = ['apercu', 'demandes', 'pieces', 'collections', 'clients'].includes(params.get('vue')) ? params.get('vue') : 'apercu';
   const statut = params.get('statut') || '';
   const go = (vue, s) => setParams(s ? { vue, statut: s } : { vue }, { replace: true });
 
@@ -518,6 +520,8 @@ export default function Admin() {
           tabs={[
             { id: 'apercu', label: 'Aperçu' },
             { id: 'demandes', label: 'Demandes' },
+            { id: 'pieces', label: 'Pièces' },
+            { id: 'collections', label: 'Collections' },
             { id: 'clients', label: 'Clients' },
           ]}
         />
@@ -526,7 +530,17 @@ export default function Admin() {
       <div className="mt-8">
         <AnimatePresence mode="wait">
           <motion.div key={tab + statut} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3, ease: EASE }}>
-            {tab === 'apercu' ? <Overview go={go} /> : tab === 'demandes' ? <DemandesView initialStatut={statut} /> : <ClientsView />}
+            {tab === 'apercu' ? (
+              <Overview go={go} />
+            ) : tab === 'demandes' ? (
+              <DemandesView initialStatut={statut} />
+            ) : tab === 'pieces' ? (
+              <PiecesView />
+            ) : tab === 'collections' ? (
+              <CollectionsView />
+            ) : (
+              <ClientsView />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

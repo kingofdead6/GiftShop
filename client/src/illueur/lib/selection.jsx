@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { brand, formatDA, showPrices } from '../config';
-import { productBySlug } from '../data/catalogue';
+import { useCatalogue } from './catalogue';
 
 /**
  * "Ma sélection" — the stand-in for a cart.
@@ -16,7 +16,9 @@ const Ctx = createContext(null);
 const load = () => {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(v) ? v.filter((l) => productBySlug(l.slug)) : [];
+    // Not filtered against the catalogue here: at boot only the bundled
+    // catalogue is known, and a piece added in the admin would be dropped.
+    return Array.isArray(v) ? v.filter((l) => l && typeof l.slug === 'string') : [];
   } catch {
     return [];
   }
@@ -26,6 +28,7 @@ export function SelectionProvider({ children }) {
   const [items, setItems] = useState(load);
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(0);
+  const { productBySlug } = useCatalogue();
 
   useEffect(() => {
     try {
@@ -49,8 +52,9 @@ export function SelectionProvider({ children }) {
   }, []);
 
   const value = useMemo(() => {
-    const lines = items.map((l) => ({ ...l, product: productBySlug(l.slug) }));
-    const count = items.reduce((n, l) => n + l.qte, 0);
+    // Pieces removed from the catalogue simply drop out of the selection.
+    const lines = items.map((l) => ({ ...l, product: productBySlug(l.slug) })).filter((l) => l.product);
+    const count = lines.reduce((n, l) => n + l.qte, 0);
     const total = lines.reduce((n, l) => n + l.product.prix * l.qte, 0);
 
     const message = (numero, wilaya = '') =>
@@ -69,7 +73,7 @@ export function SelectionProvider({ children }) {
         .join('\n');
 
     return { items, lines, count, total, open, setOpen, add, setQte, clear: () => setItems([]), message, pulse };
-  }, [items, open, add, setQte, pulse]);
+  }, [items, open, add, setQte, pulse, productBySlug]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

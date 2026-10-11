@@ -49,7 +49,7 @@ export function Field({ label, hint, error, as = 'input', className = '', childr
           {...props}
           type={isPassword && show ? 'text' : props.type}
           aria-invalid={error ? 'true' : undefined}
-          className={`h-14 w-full rounded-2xl border bg-paper px-4 text-[16px] outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-ink/30 focus:border-ink focus:shadow-[0_0_0_4px_rgba(255,79,26,0.15)] ${
+          className={`${as === 'textarea' ? 'min-h-24 py-3 leading-relaxed' : 'h-14'} w-full rounded-2xl border bg-paper px-4 text-[16px] outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-ink/30 focus:border-ink focus:shadow-[0_0_0_4px_rgba(255,79,26,0.15)] ${
             error ? 'border-ember' : 'border-ink/15'
           } ${as === 'select' ? 'appearance-none' : ''} ${isPassword ? 'pe-20' : ''}`}
         >
@@ -153,6 +153,14 @@ export function WishlistButton({ slug, className = '', size = 40, tone = 'light'
         <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3.2 1.7-2 3.2-3.2 5.3-3.2 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" />
       </motion.svg>
     </button>
+  );
+}
+
+export function PageLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <PrintDots />
+    </div>
   );
 }
 

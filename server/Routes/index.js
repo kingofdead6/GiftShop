@@ -12,6 +12,7 @@ import * as settings from '../Controllers/settingsController.js';
 import * as messages from '../Controllers/messageController.js';
 import * as dashboard from '../Controllers/dashboardController.js';
 import * as illueur from '../Controllers/illueurController.js';
+import * as catalogue from '../Controllers/catalogueController.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -40,6 +41,19 @@ router.post('/auth/favoris/:productId', protect, auth.toggleFavourite);
 router.post('/auth/wishlist/:slug', protect, illueur.toggleWishlist);
 router.post('/demandes', protect, illueur.createDemande);
 router.get('/demandes/mine', protect, illueur.myDemandes);
+
+router.get('/catalogue', catalogue.getCatalogue);
+router.get('/admin/catalogue', admin, catalogue.adminCatalogue);
+router.post('/admin/pieces', admin, catalogue.createPiece);
+router.put('/admin/pieces/reorder', admin, catalogue.reorderPieces);
+router.put('/admin/pieces/:id', admin, catalogue.updatePiece);
+router.delete('/admin/pieces/:id', admin, catalogue.deletePiece);
+router.post('/admin/pieces/:id/photo', admin, upload.single('photo'), catalogue.uploadPiecePhoto);
+router.delete('/admin/pieces/:id/photo', admin, catalogue.deletePiecePhoto);
+router.post('/admin/collections', admin, catalogue.createCollection);
+router.put('/admin/collections/reorder', admin, catalogue.reorderCollections);
+router.put('/admin/collections/:id', admin, catalogue.updateCollection);
+router.delete('/admin/collections/:id', admin, catalogue.deleteCollection);
 
 router.get('/admin/illueur/overview', admin, illueur.overview);
 router.get('/admin/demandes', admin, illueur.listDemandes);

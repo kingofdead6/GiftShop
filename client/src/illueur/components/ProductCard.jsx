@@ -4,7 +4,7 @@ import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import ProductArt from './ProductArt';
 import { WishlistButton } from './AccountUI';
 import { formatDA, showPrices } from '../config';
-import { collectionBySlug } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { EASE, useReducedMotion } from '../lib/motion';
 
 export function Price({ value, className = '' }) {
@@ -27,6 +27,7 @@ export default function ProductCard({ product, index = 0 }) {
   const glareX = useTransform(mx, (v) => `${v * 100}%`);
   const glareY = useTransform(my, (v) => `${v * 100}%`);
   const glare = useTransform([glareX, glareY], ([x, y]) => `radial-gradient(circle at ${x} ${y}, rgba(255,255,255,0.55), transparent 45%)`);
+  const { collectionBySlug } = useCatalogue();
   const coll = collectionBySlug(product.collection);
   const dark = product.dark;
 

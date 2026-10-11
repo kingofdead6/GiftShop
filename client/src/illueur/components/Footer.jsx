@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { brand, instagramDmUrl, instagramUrl } from '../config';
-import { collections } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { printEase, useReducedMotion } from '../lib/motion';
 import { Magnetic } from './Chrome';
 
@@ -11,6 +11,7 @@ import { Magnetic } from './Chrome';
  */
 export default function Footer() {
   const reduced = useReducedMotion();
+  const { collections } = useCatalogue();
 
   return (
     <footer className="relative overflow-hidden bg-ink text-bone">

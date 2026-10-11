@@ -17,14 +17,14 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = 'GET', body, signal } = {}) {
+async function request(path, { method = 'GET', body, signal, form } = {}) {
   let res;
   try {
     res = await fetch(`${BASE}${path}`, {
       method,
       credentials: 'include',
       headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: form || (body === undefined ? undefined : JSON.stringify(body)),
       signal,
     });
   } catch (err) {
@@ -50,6 +50,8 @@ export const api = {
   changePassword: (body) => request('/auth/password', { method: 'PUT', body }),
   toggleWishlist: (slug) => request(`/auth/wishlist/${slug}`, { method: 'POST' }),
 
+  catalogue: (signal) => request('/catalogue', { signal }),
+
   createDemande: (body) => request('/demandes', { method: 'POST', body }),
   myDemandes: (signal) => request('/demandes/mine', { signal }),
 
@@ -59,6 +61,22 @@ export const api = {
     updateDemande: (id, body) => request(`/admin/demandes/${id}`, { method: 'PUT', body }),
     users: (params, signal) => request(`/admin/users${qs(params)}`, { signal }),
     setRole: (id, role) => request(`/admin/users/${id}/role`, { method: 'PUT', body: { role } }),
+
+    catalogue: (signal) => request('/admin/catalogue', { signal }),
+    createPiece: (body) => request('/admin/pieces', { method: 'POST', body }),
+    updatePiece: (id, body) => request(`/admin/pieces/${id}`, { method: 'PUT', body }),
+    deletePiece: (id) => request(`/admin/pieces/${id}`, { method: 'DELETE' }),
+    reorderPieces: (ids) => request('/admin/pieces/reorder', { method: 'PUT', body: { ids } }),
+    uploadPhoto: (id, file) => {
+      const form = new FormData();
+      form.append('photo', file);
+      return request(`/admin/pieces/${id}/photo`, { method: 'POST', form });
+    },
+    deletePhoto: (id) => request(`/admin/pieces/${id}/photo`, { method: 'DELETE' }),
+    createCollection: (body) => request('/admin/collections', { method: 'POST', body }),
+    updateCollection: (id, body) => request(`/admin/collections/${id}`, { method: 'PUT', body }),
+    deleteCollection: (id, moveTo) => request(`/admin/collections/${id}${qs({ moveTo })}`, { method: 'DELETE' }),
+    reorderCollections: (ids) => request('/admin/collections/reorder', { method: 'PUT', body: { ids } }),
   },
 };
 
