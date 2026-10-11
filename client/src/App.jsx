@@ -10,6 +10,7 @@ import Navbar from './illueur/components/Navbar';
 import Footer from './illueur/components/Footer';
 import SelectionDrawer from './illueur/components/SelectionDrawer';
 import { Cursor, Preloader } from './illueur/components/Chrome';
+import ScrollRail from './illueur/components/ScrollRail';
 
 import Home from './illueur/pages/Home';
 import Collection from './illueur/pages/Collection';
@@ -72,6 +73,7 @@ function Shell() {
     <>
       <Preloader />
       <Cursor />
+      <ScrollRail />
       <Navbar />
       <AnimatePresence mode="wait" initial={false} onExitComplete={() => scrollToTarget(0, { immediate: true })}>
         <Page key={location.pathname}>

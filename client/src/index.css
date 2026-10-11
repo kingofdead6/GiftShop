@@ -98,6 +98,37 @@
     outline-offset: 3px;
   }
 
+  /* The page scrollbar is replaced by the print rail (ScrollRail.jsx) on fine
+     pointers. Inner scroll areas keep a slim ember scrollbar. */
+  html.has-rail {
+    scrollbar-width: none;
+  }
+  html.has-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ember) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: repeating-linear-gradient(to bottom, var(--color-ember) 0 2px, rgba(255, 79, 26, 0.55) 2px 4px);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ember);
+    background-clip: padding-box;
+  }
+
   @media (pointer: fine) {
     .has-cursor,
     .has-cursor a,

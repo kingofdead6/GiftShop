@@ -52,6 +52,12 @@ export function scrollToTarget(target, { immediate = false } = {}) {
   }
 }
 
+/** Scroll to an absolute y, no nav offset. Used by the scroll rail. */
+export function scrollToY(y, { immediate = false } = {}) {
+  if (lenis) lenis.scrollTo(y, { immediate, duration: 1.1 });
+  else window.scrollTo({ top: y, behavior: immediate ? 'auto' : 'smooth' });
+}
+
 /** Lenis on fine pointers only, never under reduced motion. */
 export function useSmoothScroll() {
   const reduced = useReducedMotion();
