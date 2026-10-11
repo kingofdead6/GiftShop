@@ -1,0 +1,214 @@
+import { Link } from 'react-router-dom';
+import { Instagram, Facebook, Phone, MapPin } from 'lucide-react';
+
+import EvoraTree from '../Brand/EvoraTree';
+import { useSettings } from '../../lib/settings';
+import { formatPhone, toInternational } from '../../lib/format';
+import { brand } from '../../brand';
+import { useI18n } from '../../lib/i18n';
+import LangSwitch from './LangSwitch';
+
+import LogoCard from '../../assets/Logo.png';
+
+/**
+ * The footer.
+ *
+ * Carries the fourth and last sanctioned use of the tree mark: an oversized,
+ * very low opacity watermark behind the content. It is decorative, so it is
+ * aria-hidden and sits behind a stacking context that keeps it off the links.
+ */
+
+const CATEGORIES = [
+  { slug: 'salons', nom: 'Salons' },
+  { slug: 'chambres', nom: 'Chambres' },
+  { slug: 'tables-et-chaises', nom: 'Tables & Chaises' },
+  { slug: 'meubles-tv', nom: 'Meubles TV' },
+  { slug: 'consoles-et-miroirs', nom: 'Consoles & Miroirs' },
+  { slug: 'salon-de-jardin', nom: 'Salon de Jardin' },
+  { slug: 'decoration', nom: 'Décoration' },
+];
+
+function FooterHeading({ children, ...props }) {
+  return (
+    <h2 {...props} className="mb-3 font-sans text-[12px] uppercase tracking-[0.2em] text-sand">
+      {children}
+    </h2>
+  );
+}
+
+/**
+ * A footer nav link.
+ *
+ * The 44px tap target is kept on touch, where it is a real accessibility floor,
+ * and dropped to a tight 32px on a mouse, where it was only ever padding and
+ * left the columns looking twice as tall as they needed to be.
+ */
+const FOOTER_LINK =
+  'flex min-h-[44px] items-center text-sm text-sand transition-colors duration-200 ' +
+  'hover:text-cream [@media(hover:hover)]:min-h-8';
+
+export default function Footer() {
+  const settings = useSettings();
+  const { t } = useI18n();
+  const year = new Date().getFullYear();
+
+  return (
+    <footer className="relative isolate mt-auto overflow-hidden border-t border-gold/25 bg-olive text-cream">
+      {/* Watermark. Cropped by the footer, bleeding off the right edge. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-16 -top-24 -z-10 select-none text-sand/[0.06] sm:-right-8"
+      >
+        <EvoraTree size={520} />
+      </div>
+
+      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          {/* Brand */}
+          <div className="lg:pe-8">
+            {/*
+              The logo card itself rather than the SVG mark. The source photo is
+              gold foil on olive stock and its wordmark is cropped off both
+              edges, so only the tree is shown here: the name is set in Cinzel
+              underneath, where it is real text a screen reader can read and
+              stays sharp at any size. The photo's olive ground is within a
+              hair of --color-olive, so it sits on the footer without a plate.
+            */}
+            <div className="flex items-center gap-3">
+              <img
+                src={LogoCard}
+                alt=""
+                aria-hidden="true"
+                width="56"
+                height="56"
+                loading="lazy"
+                decoding="async"
+                className="h-18 w-18 shrink-0 rounded-full  object-cover object-[50%_33%]"
+              />
+              <div>
+                <p className="font-display text-lg tracking-[0.18em] text-cream">Evora Home</p>
+                <p className="text-sm text-sand">{brand.descriptor}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm leading-snug text-sand">{brand.tagline}</p>
+          </div>
+
+          {/* Catalogue */}
+          <nav aria-labelledby="footer-catalogue">
+            <FooterHeading id="footer-catalogue">{t('footer.catalogue')}</FooterHeading>
+            <ul className="flex flex-col gap-0.5">
+              {CATEGORIES.map((c) => (
+                <li key={c.slug}>
+                  <Link to={`/catalogue/${c.slug}`} className={FOOTER_LINK}>
+                    {c.nom}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Shop */}
+          <nav aria-labelledby="footer-maison">
+            <FooterHeading id="footer-maison">{t('footer.house')}</FooterHeading>
+            <ul className="flex flex-col gap-0.5">
+              {[
+                { to: '/showroom', key: 'nav.showroom' },
+                { to: '/faq', key: 'nav.faq' },
+                { to: '/contact', key: 'nav.contact' },
+                { to: '/compte/commandes', key: 'footer.trackOrder' },
+              ].map((l) => (
+                <li key={l.to}>
+                  <Link to={l.to} className={FOOTER_LINK}>
+                    {t(l.key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Contact */}
+          <div>
+            <FooterHeading>{t('footer.reach')}</FooterHeading>
+            <ul className="flex flex-col gap-1">
+              <li>
+                <a
+                  href={`tel:+${toInternational(settings.telephone)}`}
+                  className={`${FOOTER_LINK} gap-2.5`}
+                >
+                  <Phone size={15} strokeWidth={1.5} className="shrink-0 text-gold" />
+                  <span className="tabular-nums">{formatPhone(settings.telephone)}</span>
+                </a>
+              </li>
+
+              {settings.telephone2 ? (
+                <li>
+                  <a
+                    href={`tel:+${toInternational(settings.telephone2)}`}
+                    className={`${FOOTER_LINK} gap-2.5`}
+                  >
+                    <Phone size={15} strokeWidth={1.5} className="shrink-0 text-gold" />
+                    <span className="tabular-nums">{formatPhone(settings.telephone2)}</span>
+                  </a>
+                </li>
+              ) : null}
+
+              {/* Not a link, so it keeps its own tight spacing rather than the
+                  tap-target height the phone numbers need. */}
+              <li className="mt-1 flex items-start gap-2.5 text-sm leading-snug text-sand">
+                <MapPin size={15} strokeWidth={1.5} className="mt-0.5 shrink-0 text-gold" />
+                <span>{settings.adresse}</span>
+              </li>
+
+              {settings.horaires ? (
+                <li className="text-sm leading-snug text-sand">{settings.horaires}</li>
+              ) : null}
+            </ul>
+
+            <div className="mt-4 flex items-center gap-2">
+              {settings.instagram ? (
+                <a
+                  href={`https://instagram.com/${settings.instagram}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Instagram"
+                  className="flex h-11 w-11 items-center justify-center rounded-sm border border-sand/25 text-sand transition-colors duration-200 hover:border-gold hover:text-cream"
+                >
+                  <Instagram size={17} strokeWidth={1.5} />
+                </a>
+              ) : null}
+
+              {settings.facebook ? (
+                <a
+                  href={settings.facebook}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Facebook"
+                  className="flex h-11 w-11 items-center justify-center rounded-sm border border-sand/25 text-sand transition-colors duration-200 hover:border-gold hover:text-cream"
+                >
+                  <Facebook size={17} strokeWidth={1.5} />
+                </a>
+              ) : null}
+
+              {settings.tiktok ? (
+                <a
+                  href={`https://tiktok.com/@${settings.tiktok}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="TikTok"
+                  className="flex h-11 w-11 items-center justify-center rounded-sm border border-sand/25 text-sand transition-colors duration-200 hover:border-gold hover:text-cream"
+                >
+                  <span className="text-[18px] font-black">t</span>
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-1.5 border-t border-sand/15 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-sand">{t('footer.rights', { year })}</p>
+          <p className="text-sm text-sand">{t('footer.cod')}</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
