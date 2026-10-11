@@ -1,9 +1,24 @@
+import 'dotenv/config';
+import crypto from 'node:crypto';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 
-import User, { normalisePhone } from './Models/User.js';
+import User, { normalisePhone, isValidPhone } from './Models/User.js';
+import { connectDb, DB_NAME } from './db.js';
 
-dotenv.config();
+/**
+ * Creates (or promotes) the illueur super admin.
+ *
+ *   npm run create-admin
+ *
+ * Credentials come from server/.env:
+ *   ADMIN_EMAIL     default admin@illueur.dz
+ *   ADMIN_PHONE     default 0550000000 (an admin can log in with either)
+ *   ADMIN_NAME      default Atelier illueur
+ *   ADMIN_PASSWORD  if unset, a random one is generated and printed once
+ *
+ * Re-running on an existing account only fixes its role: it never resets a
+ * password someone has already changed.
+ */
 
 const REQUIRED = ['MONGO_URI', 'JWT_SECRET'];
 const missing = REQUIRED.filter((key) => !process.env[key]);
@@ -12,53 +27,43 @@ if (missing.length) {
   process.exit(1);
 }
 
-const email = 'admin@gmail.com';
-const telephone = process.env.ADMIN_PHONE || '0540870382';
-const password = 'Pwd123456';
+const email = (process.env.ADMIN_EMAIL || 'admin@illueur.dz').trim().toLowerCase();
+const telephone = process.env.ADMIN_PHONE || '0550000000';
+const nom = process.env.ADMIN_NAME || 'Atelier illueur';
+const generated = !process.env.ADMIN_PASSWORD;
+const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(9).toString('base64url');
 const role = 'SUPER_ADMIN';
 
 async function main() {
-  await mongoose.connect(process.env.MONGO_URI);
-  console.log('MongoDB connecté');
+  if (!isValidPhone(telephone)) throw new Error(`ADMIN_PHONE invalide: ${telephone}`);
+  if (password.length < 6) throw new Error('ADMIN_PASSWORD doit contenir au moins 6 caractères');
 
-  const existingEmail = await User.findOne({ email });
-  if (existingEmail) {
-    if (existingEmail.role !== role) {
-      existingEmail.role = role;
-      await existingEmail.save();
-      console.log(`Mise à jour du rôle de ${email} en ${role}`);
+  await connectDb();
+  console.log(`MongoDB connecté (base: ${DB_NAME})`);
+
+  const existing = await User.findOne({ $or: [{ email }, { telephone: normalisePhone(telephone) }] });
+  if (existing) {
+    if (existing.role !== role) {
+      existing.role = role;
+      await existing.save();
+      console.log(`${existing.email || existing.telephone} est maintenant ${role}.`);
     } else {
-      console.log(`Compte existant trouvé pour ${email}`);
+      console.log(`Le compte ${existing.email || existing.telephone} existe déjà (${role}). Mot de passe inchangé.`);
     }
-    await mongoose.disconnect();
     return;
   }
 
-  const existingPhone = await User.findOne({ telephone: normalisePhone(telephone) });
-  if (existingPhone) {
-    console.error(`Impossible de créer le compte: le téléphone ${telephone} est déjà utilisé`);
-    await mongoose.disconnect();
-    process.exit(1);
-  }
+  await new User({ nom, telephone, email, passwordHash: password, role }).save();
 
-  const user = new User({
-    nom: 'Super Admin',
-    telephone,
-    email,
-    passwordHash: password,
-    role,
-  });
-  await user.save();
-
-  console.log(`Compte créé: ${email} (${role})`);
-  console.log(`Téléphone: ${telephone}`);
-  console.log(`Mot de passe: ${password}`);
-
-  await mongoose.disconnect();
+  console.log('\nCompte super admin créé');
+  console.log(`  Email       ${email}`);
+  console.log(`  Téléphone   ${normalisePhone(telephone)}`);
+  console.log(`  Mot de passe ${password}${generated ? '   (généré, notez-le maintenant)' : ''}`);
 }
 
-main().catch(async (err) => {
-  console.error(err);
-  await mongoose.disconnect().catch(() => {});
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error(err.message || err);
+    process.exitCode = 1;
+  })
+  .finally(() => mongoose.disconnect().catch(() => {}));

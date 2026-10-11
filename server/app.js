@@ -25,7 +25,9 @@ export function createApp({ rateLimits = true } = {}) {
    */
   const allowedOrigins = [
     'http://localhost:5173',
-    'https://evora-home.vercel.app',
+    'http://localhost:4173',
+    // Comma-separated deployed client URLs, e.g. https://illueur.vercel.app
+    ...(process.env.CLIENT_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean),
   ];
 
   app.use(
@@ -54,6 +56,19 @@ export function createApp({ rateLimits = true } = {}) {
         standardHeaders: true,
         legacyHeaders: false,
         message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+      })
+    );
+
+    // Demandes, so a script cannot fill the admin with junk.
+    app.use(
+      '/api/demandes',
+      rateLimit({
+        windowMs: 60 * 60 * 1000,
+        limit: 30,
+        standardHeaders: true,
+        legacyHeaders: false,
+        skip: (req) => req.method === 'GET',
+        message: { message: 'Trop de demandes envoyées. Écrivez-nous directement en DM.' },
       })
     );
 

@@ -1,9 +1,7 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 
 import { createApp } from './app.js';
-
-dotenv.config();
+import { connectDb, DB_NAME } from './db.js';
 
 const REQUIRED = ['MONGO_URI', 'JWT_SECRET'];
 const missing = REQUIRED.filter((key) => !process.env[key]);
@@ -15,10 +13,9 @@ if (missing.length) {
 const app = createApp();
 const PORT = process.env.PORT || 5000;
 
-mongoose
-  .connect(process.env.MONGO_URI)
+connectDb()
   .then(() => {
-    console.log('MongoDB connecté');
+    console.log(`MongoDB connecté (base: ${DB_NAME})`);
     app.listen(PORT, () => console.log(`API sur le port ${PORT}`));
   })
   .catch((err) => {

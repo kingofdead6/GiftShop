@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 
 import { SelectionProvider } from './illueur/lib/selection';
+import { AuthProvider } from './illueur/lib/auth';
+import { RequireAuth } from './illueur/components/AccountUI';
 import { EASE_IN_OUT, scrollToTarget, useReducedMotion, useSmoothScroll } from './illueur/lib/motion';
 import Navbar from './illueur/components/Navbar';
 import Footer from './illueur/components/Footer';
@@ -13,13 +15,17 @@ import Home from './illueur/pages/Home';
 import Collection from './illueur/pages/Collection';
 import Piece from './illueur/pages/Piece';
 import NotFound from './illueur/pages/NotFound';
+import Auth from './illueur/pages/Auth';
+import Account from './illueur/pages/Account';
+import Admin from './illueur/pages/Admin';
 
 /**
  * Atelier illueur — storefront demo.
  *
  * Fully client-side: the catalogue lives in illueur/data/catalogue.js and
- * orders end in an Instagram DM, which is how the shop already works. The
- * Express/Mongo server in /server is not used by this storefront.
+ * orders end in an Instagram DM, which is how the shop already works.
+ * Accounts, demandes and the admin talk to the server in /server (database
+ * "illueur", see server/db.js) through illueur/lib/api.js.
  */
 
 const BARS = 7;
@@ -74,10 +80,27 @@ function Shell() {
               <Route path="/" element={<Home />} />
               <Route path="/collection/:slug" element={<Collection />} />
               <Route path="/piece/:slug" element={<Piece />} />
+              <Route path="/connexion" element={<Auth />} />
+              <Route
+                path="/compte"
+                element={
+                  <RequireAuth>
+                    <Account />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth admin>
+                    <Admin />
+                  </RequireAuth>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
-          <Footer />
+          {location.pathname.startsWith('/admin') || location.pathname === '/connexion' ? null : <Footer />}
         </Page>
       </AnimatePresence>
       <SelectionDrawer />
@@ -101,9 +124,11 @@ function Shell() {
 export default function App() {
   return (
     <BrowserRouter>
-      <SelectionProvider>
-        <Shell />
-      </SelectionProvider>
+      <AuthProvider>
+        <SelectionProvider>
+          <Shell />
+        </SelectionProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

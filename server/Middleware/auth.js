@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../Models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const TOKEN_COOKIE = 'evora_session';
+export const TOKEN_COOKIE = 'illueur_session';
 
 /**
  * The session token lives in an httpOnly cookie, not in localStorage. A token
@@ -14,22 +14,22 @@ export function signSession(res, user) {
     expiresIn: '30d',
   });
 
-  res.cookie(TOKEN_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    path: '/',
-  });
+  res.cookie(TOKEN_COOKIE, token, { ...cookieOptions(), maxAge: 30 * 24 * 60 * 60 * 1000 });
+}
+
+/**
+ * Production serves the client and the API from different sites, which needs
+ * SameSite=None, and browsers only accept that with Secure. Locally both run on
+ * localhost (same site, any port) over plain http, where None-without-Secure is
+ * rejected outright, so development uses Lax.
+ */
+function cookieOptions() {
+  const prod = process.env.NODE_ENV === 'production';
+  return { httpOnly: true, secure: prod, sameSite: prod ? 'none' : 'lax', path: '/' };
 }
 
 export function clearSession(res) {
-  res.clearCookie(TOKEN_COOKIE, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
-    path: '/',
-  });
+  res.clearCookie(TOKEN_COOKIE, cookieOptions());
 }
 
 function readToken(req) {
@@ -72,6 +72,15 @@ export const admin = (req, res, next) => {
   if (!['ADMIN', 'SUPER_ADMIN'].includes(req.user.role)) {
     res.status(403);
     return next(new Error('Accès réservé à l\'administration'));
+  }
+  return next();
+};
+
+/** Requires the super admin: managing other admins. */
+export const superAdmin = (req, res, next) => {
+  if (req.user?.role !== 'SUPER_ADMIN') {
+    res.status(403);
+    return next(new Error('Réservé au super administrateur'));
   }
   return next();
 };

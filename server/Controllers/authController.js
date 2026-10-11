@@ -13,7 +13,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * can find their favourites and past orders.
  */
 export const register = asyncHandler(async (req, res) => {
-  const { nom, telephone, email, password } = req.body;
+  const { nom, telephone, email, password, wilaya } = req.body;
   const cleanEmail = email?.trim().toLowerCase();
 
   if (!nom?.trim()) {
@@ -51,6 +51,7 @@ export const register = asyncHandler(async (req, res) => {
     nom: nom.trim(),
     telephone,
     email: cleanEmail || undefined,
+    wilaya: String(wilaya || '').trim().slice(0, 60),
     passwordHash: password,
     // Role is never taken from the request body. An admin is made by the seed
     // script or by another admin, never by signing up.
@@ -104,8 +105,9 @@ export const me = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { nom, email } = req.body;
+  const { nom, email, wilaya } = req.body;
   if (nom?.trim()) req.user.nom = nom.trim();
+  if (wilaya !== undefined) req.user.wilaya = String(wilaya).trim().slice(0, 60);
   if (email !== undefined) {
     const cleanEmail = email?.trim().toLowerCase();
     if (cleanEmail && !EMAIL_REGEX.test(cleanEmail)) {

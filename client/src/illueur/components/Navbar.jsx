@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { brand, instagramUrl } from '../config';
 import { useSelection } from '../lib/selection';
+import { useAuth } from '../lib/auth';
 import { EASE, EASE_IN_OUT, lockScroll, printEase, scrollToTarget } from '../lib/motion';
 
 export const NAV = [
@@ -36,6 +37,7 @@ function Wordmark() {
 
 export default function Navbar() {
   const { count, setOpen, pulse } = useSelection();
+  const { user, isAdmin } = useAuth();
   const [hidden, setHidden] = useState(false);
   const [menu, setMenu] = useState(false);
   const { scrollY } = useScroll();
@@ -83,6 +85,28 @@ export default function Navbar() {
           </ul>
 
           <div className="flex items-center gap-2">
+            {isAdmin ? (
+              <Link to="/admin" className="mono hidden h-10 items-center rounded-full border border-ink/15 px-3 transition-colors hover:border-ember hover:text-ember md:flex">
+                Admin
+              </Link>
+            ) : null}
+            <Link
+              to={user ? '/compte' : '/connexion'}
+              aria-label={user ? 'Mon compte' : 'Se connecter'}
+              data-cursor={user ? 'Compte' : 'Login'}
+              className="flex h-10 min-w-10 items-center justify-center rounded-full border border-ink/15 px-2 transition-colors hover:border-ink"
+            >
+              {user ? (
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ember font-mono text-[12px] uppercase text-ink">
+                  {user.nom.trim()[0]}
+                </span>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                </svg>
+              )}
+            </Link>
             <button
               type="button"
               onClick={() => setOpen(true)}
@@ -148,9 +172,19 @@ export default function Navbar() {
               animate={{ opacity: 1, transition: { delay: 0.6, duration: 0.6, ease: printEase(6) } }}
               className="flex items-end justify-between"
             >
-              <a href={instagramUrl} target="_blank" rel="noreferrer" className="mono text-ember">
-                @{brand.instagram} ↗
-              </a>
+              <div className="flex flex-col gap-2">
+                <Link to={user ? '/compte' : '/connexion'} className="mono text-bone">
+                  {user ? 'Mon compte →' : 'Se connecter →'}
+                </Link>
+                {isAdmin ? (
+                  <Link to="/admin" className="mono text-bone">
+                    Admin →
+                  </Link>
+                ) : null}
+                <a href={instagramUrl} target="_blank" rel="noreferrer" className="mono text-ember">
+                  @{brand.instagram} ↗
+                </a>
+              </div>
               <span className="mono text-smoke">Made in Algeria</span>
             </motion.div>
           </motion.div>

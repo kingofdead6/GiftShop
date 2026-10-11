@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --watch index.js",
     "start": "node index.js",
+    "create-admin": "node create-admin.js",
     "seed": "node seed/seed.js",
     "verify": "node seed/verify.js",
     "smoke": "node seed/smoke.js",

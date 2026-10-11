@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import ProductArt from './ProductArt';
+import { WishlistButton } from './AccountUI';
 import { formatDA, showPrices } from '../config';
 import { collectionBySlug } from '../data/catalogue';
 import { EASE, useReducedMotion } from '../lib/motion';
@@ -87,9 +88,12 @@ export default function ProductCard({ product, index = 0 }) {
             <span className="mono rounded-full border border-current/20 px-2.5 py-1 text-[10px] opacity-80 backdrop-blur-sm">
               {coll?.nom}
             </span>
-            {coll?.nouveau ? (
-              <span className="mono rounded-full bg-ember px-2.5 py-1 text-[10px] text-ink">Nouveau</span>
-            ) : null}
+            <span className="flex items-center gap-2">
+              {coll?.nouveau ? (
+                <span className="mono rounded-full bg-ember px-2.5 py-1 text-[10px] text-ink">Nouveau</span>
+              ) : null}
+              <WishlistButton slug={product.slug} size={34} tone={dark ? 'dark' : 'light'} />
+            </span>
           </div>
         </motion.div>
 

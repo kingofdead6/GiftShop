@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { instagramDmUrl, whatsappUrl } from '../config';
 import { useSelection } from '../lib/selection';
+import { useAuth } from '../lib/auth';
+import api from '../lib/api';
 import { EASE, lockScroll } from '../lib/motion';
 import ProductArt from './ProductArt';
 import { Price } from './ProductCard';
@@ -13,7 +15,9 @@ import { Price } from './ProductCard';
  * generated message, open the Instagram DM.
  */
 export default function SelectionDrawer() {
-  const { lines, open, setOpen, setQte, total, count, message } = useSelection();
+  const { lines, open, setOpen, setQte, total, count, message, clear } = useSelection();
+  const { user } = useAuth();
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     lockScroll(open);
@@ -26,17 +30,45 @@ export default function SelectionDrawer() {
     };
   }, [open, setOpen]);
 
+  /**
+   * Logged-in customers get the demande saved to their account first, so the
+   * DM carries its reference and they can follow it from /compte. If saving
+   * fails the DM still goes out: the order channel never depends on the API.
+   */
   const sendInstagram = async () => {
+    // Opened synchronously, inside the click, or popup blockers eat it once
+    // the save below has awaited.
+    const tab = window.open('', '_blank');
+    let numero = null;
+    if (user) {
+      setSending(true);
+      try {
+        const d = await api.createDemande({
+          lignes: lines.map((l) => ({ slug: l.slug, nom: l.product.nom, couleur: l.couleur, qte: l.qte, prix: l.product.prix })),
+          wilaya: user.wilaya,
+        });
+        numero = d.numero;
+      } catch {
+        // Fall through to a plain DM.
+      } finally {
+        setSending(false);
+      }
+    }
     try {
-      await navigator.clipboard.writeText(message());
-      toast('Message copié. Colle-le dans la conversation 👇');
+      await navigator.clipboard.writeText(message(numero, user?.wilaya));
+      toast(numero ? `Demande ${numero} enregistrée. Message copié 👇` : 'Message copié. Colle-le dans la conversation 👇');
     } catch {
       toast('Ouvre la conversation et décris ta sélection.');
     }
-    window.open(instagramDmUrl, '_blank', 'noopener');
+    if (tab) tab.location.href = instagramDmUrl;
+    else window.open(instagramDmUrl, '_blank', 'noopener');
+    if (numero) {
+      clear();
+      setOpen(false);
+    }
   };
 
-  const wa = whatsappUrl(message());
+  const wa = whatsappUrl(message(null, user?.wilaya));
 
   return (
     <AnimatePresence>
@@ -147,7 +179,7 @@ export default function SelectionDrawer() {
                   className="group relative flex h-14 w-full items-center justify-center overflow-hidden rounded-full bg-ink font-medium text-bone"
                 >
                   <span className="absolute inset-0 origin-bottom scale-y-0 bg-ember transition-transform duration-500 ease-out-expo group-hover:scale-y-100" />
-                  <span className="relative transition-colors group-hover:text-ink">Commander sur Instagram ↗</span>
+                  <span className="relative transition-colors group-hover:text-ink">{sending ? 'Enregistrement…' : 'Commander sur Instagram ↗'}</span>
                 </button>
                 {wa ? (
                   <a
@@ -160,7 +192,17 @@ export default function SelectionDrawer() {
                   </a>
                 ) : null}
                 <p className="mt-3 text-center text-[12px] text-ash">
-                  On copie ta commande, tu la colles dans le DM. Paiement à la livraison.
+                  {user ? (
+                    'Ta demande est gardée dans ton compte. On copie le message, tu le colles dans le DM.'
+                  ) : (
+                    <>
+                      On copie ta commande, tu la colles dans le DM.{' '}
+                      <Link to="/connexion" onClick={() => setOpen(false)} className="underline underline-offset-2">
+                        Connecte-toi
+                      </Link>{' '}
+                      pour la suivre.
+                    </>
+                  )}
                 </p>
               </footer>
             ) : null}

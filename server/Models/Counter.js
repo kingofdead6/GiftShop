@@ -25,4 +25,11 @@ export async function nextOrderNumber(date = new Date()) {
   return `EVH-${year}-${String(doc.seq).padStart(4, '0')}`;
 }
 
+/** illueur demandes: ILL-2026-0001, restarting each January. */
+export async function nextDemandeNumber(date = new Date()) {
+  const year = date.getFullYear();
+  const doc = await Counter.findByIdAndUpdate(`demande-${year}`, { $inc: { seq: 1 } }, { new: true, upsert: true });
+  return `ILL-${year}-${String(doc.seq).padStart(4, '0')}`;
+}
+
 export default Counter;

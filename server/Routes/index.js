@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 
-import { protect, admin } from '../Middleware/auth.js';
+import { protect, admin, superAdmin } from '../Middleware/auth.js';
 
 import * as auth from '../Controllers/authController.js';
 import * as products from '../Controllers/productController.js';
@@ -11,6 +11,7 @@ import * as orders from '../Controllers/orderController.js';
 import * as settings from '../Controllers/settingsController.js';
 import * as messages from '../Controllers/messageController.js';
 import * as dashboard from '../Controllers/dashboardController.js';
+import * as illueur from '../Controllers/illueurController.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -34,6 +35,17 @@ router.post('/auth/adresses', protect, auth.addAddress);
 router.delete('/auth/adresses/:addressId', protect, auth.deleteAddress);
 router.get('/auth/favoris', protect, auth.listFavourites);
 router.post('/auth/favoris/:productId', protect, auth.toggleFavourite);
+
+// ── illueur: wishlist and demandes ──────────────────────────────────────────
+router.post('/auth/wishlist/:slug', protect, illueur.toggleWishlist);
+router.post('/demandes', protect, illueur.createDemande);
+router.get('/demandes/mine', protect, illueur.myDemandes);
+
+router.get('/admin/illueur/overview', admin, illueur.overview);
+router.get('/admin/demandes', admin, illueur.listDemandes);
+router.put('/admin/demandes/:id', admin, illueur.updateDemande);
+router.get('/admin/users', admin, illueur.listUsers);
+router.put('/admin/users/:id/role', admin, superAdmin, illueur.setUserRole);
 
 // ── Catalogue (public) ───────────────────────────────────────────────────────
 router.get('/products', products.listProducts);

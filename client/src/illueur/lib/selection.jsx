@@ -53,16 +53,16 @@ export function SelectionProvider({ children }) {
     const count = items.reduce((n, l) => n + l.qte, 0);
     const total = lines.reduce((n, l) => n + l.product.prix * l.qte, 0);
 
-    const message = () =>
+    const message = (numero, wilaya = '') =>
       [
         `Salam ${brand.atelier} 👋`,
-        'Je voudrais commander :',
+        numero ? `Je voudrais commander (réf. ${numero}) :` : 'Je voudrais commander :',
         ...lines.map(
           (l) =>
             `• ${l.qte} × ${l.product.nom} — ${l.couleur}${showPrices ? ` (${formatDA(l.product.prix * l.qte)})` : ''}`
         ),
         showPrices ? `Total : ${formatDA(total)} + livraison` : null,
-        'Wilaya : ',
+        `Wilaya : ${wilaya}`,
         'Merci !',
       ]
         .filter((x) => x !== null)

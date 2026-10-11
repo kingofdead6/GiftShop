@@ -9,6 +9,7 @@ import ProductArt from '../components/ProductArt';
 import ProductCard, { Price } from '../components/ProductCard';
 import { Magnetic, RiseLines } from '../components/Chrome';
 import NotFound from './NotFound';
+import { WishlistButton } from '../components/AccountUI';
 
 export default function Piece() {
   const { slug } = useParams();
@@ -51,6 +52,7 @@ function PieceView({ p }) {
           <div className="absolute inset-0">
             <ProductArt product={p} color={color.hex} draggable printOnView />
           </div>
+          <WishlistButton slug={p.slug} size={48} tone={dark ? 'dark' : 'light'} className="absolute right-5 top-5" />
           {p.art.kind === 'layers' ? (
             <span className={`mono pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full border px-3 py-1.5 backdrop-blur ${dark ? 'border-bone/20 text-bone' : 'border-ink/15 text-ink'}`}>
               ← Glissez pour tourner →

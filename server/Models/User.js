@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema(
 
     adresses: { type: [adresseSchema], default: [] },
     favoris: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+
+    // illueur's catalogue lives in the client, so its favourites are product
+    // slugs rather than Product ids.
+    wishlist: { type: [String], default: [] },
+    wilaya: { type: String, trim: true, default: '' },
   },
   { timestamps: true }
 );
@@ -78,6 +83,9 @@ userSchema.methods.toPublic = function toPublic() {
     role: this.role,
     adresses: this.adresses,
     favoris: this.favoris,
+    wishlist: this.wishlist,
+    wilaya: this.wilaya,
+    createdAt: this.createdAt,
   };
 };
 
