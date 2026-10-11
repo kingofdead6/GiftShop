@@ -26,6 +26,7 @@ export function createApp({ rateLimits = true } = {}) {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:4173',
+    'https://gift-shop-swart.vercel.app',
     // Comma-separated deployed client URLs, e.g. https://illueur.vercel.app
     ...(process.env.CLIENT_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean),
   ];
